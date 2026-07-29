@@ -1,14 +1,125 @@
-<ActionBar title="Home" class="action-bar"></ActionBar>
-<GridLayout rows="auto, *">
-    <MapView rowSpan="2" (ready)="onReady($event)" (mapReady)="onMapReady($event)" myLocationButtonEnabled="true"
-        myLocationTapped="myLocationTapped()" iosOverflowSafeArea="true">
+<ActionBar class="action-bar" color="#ffffff" backgroundColor="#19336c">
+    <StackLayout orientation="horizontal" class="brand-wrap">
+        <Label class="brand-title" text="GeoBov" color="#ffffff"></Label>
+        <Label class="brand-farm" [text]="selectedCompanyName" textWrap="false"></Label>
+    </StackLayout>
+    <ActionItem ios.position="right" android.position="actionBar" (tap)="onOpenMenu()">
+        <Label class="menu-icon" text="☰" color="#ffffff"></Label>
+    </ActionItem>
+</ActionBar>
+
+<GridLayout>
+    <MapView (ready)="onReady($event)" (mapReady)="onMapReady($event)"
+        (markerTap)="onMarkerTap($event)" (infoWindowTap)="onMarkerTap($event)"
+        (markerInfoWindow)="onSuppressInfoWindow()"
+        myLocationButtonEnabled="true" iosOverflowSafeArea="true">
     </MapView>
-    <GridLayout class="input-container">
-        <TextField class="input" #searchBar hint="Pesquise aqui" (textChange)="onSearch($event.value)" row="0">
+
+    <StackLayout class="top-overlay" verticalAlignment="top">
+        <TextField class="search-input" hint="Buscar por nome ou brinco" [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchInput($event)">
         </TextField>
+        @if (isNotFound) {
+        <Label class="not-found-message" text="Gado não encontrado!"></Label>
+        }
+    </StackLayout>
+
+    @if (selectedCattle) {
+    <ScrollView class="detail-sheet" verticalAlignment="bottom">
+        <StackLayout class="detail-content">
+            <GridLayout columns="*, auto" class="detail-header">
+                <StackLayout col="0">
+                    <Label class="detail-title" [text]="selectedCattle.name || selectedCattle.tag"></Label>
+                    <Label class="detail-subtitle" [text]="'Brinco: ' + selectedCattle.tag"></Label>
+                </StackLayout>
+                <Button col="1" text="✕" class="btn-close" (tap)="closeCattleDetail()"></Button>
+            </GridLayout>
+
+            @if (selectedCattle.companyName) {
+            <Label class="detail-line" [text]="'Fazenda: ' + selectedCattle.companyName" textWrap="true"></Label>
+            }
+            @if (selectedCattle.breed) {
+            <Label class="detail-line" [text]="'Raça: ' + selectedCattle.breed"></Label>
+            }
+            @if (selectedCattle.description) {
+            <Label class="detail-line" [text]="selectedCattle.description" textWrap="true"></Label>
+            }
+            <Label class="detail-line"
+                [text]="'Última atualização: ' + formatTimeAgo(selectedCattle.lastSeenAt)"
+                textWrap="true"></Label>
+            <Label class="detail-line"
+                [text]="'Próxima atualização: ' + formatNextUpdateEta(selectedCattle.lastSeenAt, selectedCattle.transmissionIntervalMinutes)"
+                textWrap="true"></Label>
+
+            <Label class="notes-label" text="Observação"></Label>
+            <TextView class="notes-input" [(ngModel)]="observationDraft" hint="Ex.: mancando na pata traseira"
+                height="90"></TextView>
+
+            <Button class="btn-save" [text]="isSavingNotes ? 'Salvando...' : 'Salvar observação'"
+                [isEnabled]="!isSavingNotes" (tap)="onSaveObservation()"></Button>
+        </StackLayout>
+    </ScrollView>
+    }
+
+    @if (isMenuOpen) {
+    <GridLayout class="modal-backdrop" rows="*, auto">
+        <StackLayout row="0" (tap)="closeMenu()"></StackLayout>
+        <StackLayout row="1" class="menu-sheet">
+            <Label class="menu-title" text="Menu"></Label>
+            <Label class="menu-subtitle" [text]="selectedCompanyName" textWrap="true"></Label>
+
+            @if (canSwitchFarm) {
+            <Label class="menu-btn menu-btn-secondary" text="Trocar fazenda"
+                (tap)="onMenuSwitchFarm()"></Label>
+            }
+            <Label class="menu-btn menu-btn-danger" text="Sair" (tap)="onMenuLogout()"></Label>
+            <Label class="menu-btn menu-btn-ghost" text="Fechar" (tap)="closeMenu()"></Label>
+        </StackLayout>
     </GridLayout>
-    @if(isNotFound){
-    <Label class="not-found-message" row="1" horizontalAlignment="center" verticalAlignment="middle">Gado não
-        encontrado!</Label>
+    }
+
+    @if (isFarmPickerOpen) {
+    <GridLayout class="modal-backdrop" rows="*, auto">
+        <StackLayout row="0" (tap)="closeFarmPicker()"></StackLayout>
+        <StackLayout row="1" class="menu-sheet farm-picker">
+            <Label class="menu-title" text="Escolher fazenda"></Label>
+            <Label class="menu-subtitle" text="Selecione a fazenda para administrar"
+                textWrap="true"></Label>
+
+            <TextField class="farm-search-input" hint="Buscar fazenda"
+                [(ngModel)]="farmSearchQuery" (ngModelChange)="onFarmSearchInput($event)">
+            </TextField>
+
+            <ScrollView class="farm-list-scroll">
+                <StackLayout>
+                    @if (isLoadingFarms && companies.length === 0) {
+                    <Label class="farm-empty" text="Carregando fazendas..."></Label>
+                    }
+
+                    @for (company of companies; track company.id) {
+                    <Label class="menu-btn menu-btn-secondary farm-item" [text]="company.name"
+                        (tap)="selectFarm(company)"></Label>
+                    }
+
+                    @if (!isLoadingFarms && companies.length === 0) {
+                    <Label class="farm-empty" text="Nenhuma fazenda encontrada"></Label>
+                    }
+
+                    @if (farmHasMore) {
+                    <Label class="menu-btn menu-btn-ghost"
+                        [text]="isLoadingFarms ? 'Carregando...' : 'Carregar mais'"
+                        (tap)="loadMoreFarms()"></Label>
+                    }
+
+                    @if (farmTotal > 0) {
+                    <Label class="farm-count"
+                        [text]="companies.length + ' de ' + farmTotal + ' fazendas'"></Label>
+                    }
+                </StackLayout>
+            </ScrollView>
+
+            <Label class="menu-btn menu-btn-ghost" text="Cancelar" (tap)="closeFarmPicker()"></Label>
+        </StackLayout>
+    </GridLayout>
     }
 </GridLayout>

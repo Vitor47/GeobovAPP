@@ -1,51 +1,210 @@
-.container{
-  background-color: #3b5998;
-  color: white;
-}
-
-.form {
-  width: 860;
-}
-
 .action-bar {
-  background-color: #3b5998;
+  background-color: #19336c;
+  color: #ffffff;
+}
+
+.menu-icon {
+  color: #ffffff;
+  font-size: 22;
+  padding: 0 8;
+  vertical-align: center;
+}
+
+.brand-wrap {
+  horizontal-align: left;
+  vertical-align: center;
+  padding-left: 4;
+}
+
+.brand-title {
   color: white;
+  font-size: 18;
+  font-weight: 700;
+  margin-right: 8;
 }
 
-.label {
-  font-weight: bold;
-  margin-bottom: 5;
+.brand-farm {
+  color: #c5d0e8;
+  font-size: 13;
+  max-width: 180;
 }
 
-.input-container {
-  padding: 10 40 10 10;
+.top-overlay {
+  /* Leave room on the right for the Google Maps my-location button. */
+  padding: 8 64 0 12;
 }
 
-.input {
-  padding: 10;
-  border: 1 solid #ccc;
-  border-radius: 5;
+.search-input {
+  padding: 10 12;
+  border-radius: 10;
   color: black;
   background-color: white;
-}
-
-.btn-primary {
-  background-color: #3b5998;
-  color: white;
-  padding: 10;
-  border-radius: 5;
-}
-
-.error-label {
-  color: red;
-  font-size: 12;
+  font-size: 14;
+  width: 100%;
 }
 
 .not-found-message {
+  margin-top: 8;
+  padding: 8 10;
+  border-radius: 8;
   background-color: white;
+  color: #b00020;
+  font-weight: 600;
+  text-align: center;
+}
+
+.detail-sheet {
+  max-height: 48%;
+  background-color: white;
+  border-top-left-radius: 16;
+  border-top-right-radius: 16;
+}
+
+.detail-content {
+  padding: 14 16 18 16;
+}
+
+.detail-header {
+  margin-bottom: 8;
+}
+
+.detail-title {
+  font-size: 20;
+  font-weight: 700;
+  color: #19336c;
+}
+
+.detail-subtitle {
+  font-size: 14;
+  color: #4a5568;
+  margin-top: 2;
+}
+
+.detail-line {
+  font-size: 13;
+  color: #2d3748;
+  margin-top: 4;
+}
+
+.notes-label {
+  margin-top: 12;
+  margin-bottom: 6;
+  font-size: 13;
+  font-weight: 600;
+  color: #19336c;
+}
+
+.notes-input {
   padding: 10;
-  border-radius: 5;
-  color: red;
-  font-weight: bold;
+  border-radius: 8;
+  background-color: #f3f5f9;
+  color: black;
+  border-width: 1;
+  border-color: #d7deea;
+}
+
+.btn-close {
+  width: 36;
+  height: 36;
+  padding: 0;
+  margin: 0;
+  background-color: #eef2f8;
+  color: #19336c;
+  border-radius: 18;
+  font-size: 16;
+}
+
+.btn-save {
+  margin-top: 12;
+  padding: 12;
+  border-radius: 10;
+  background-color: #19336c;
+  color: white;
+  font-weight: 600;
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.menu-sheet {
+  background-color: white;
+  border-top-left-radius: 18;
+  border-top-right-radius: 18;
+  padding: 18 16 22 16;
+}
+
+.farm-picker {
+  max-height: 70%;
+}
+
+.farm-search-input {
+  margin-bottom: 10;
+  padding: 12;
+  border-radius: 10;
+  background-color: #f3f5f9;
+  color: black;
+  font-size: 14;
+}
+
+.farm-list-scroll {
+  max-height: 280;
+  margin-bottom: 8;
+}
+
+.farm-item {
   margin-top: 10;
+}
+
+.farm-empty {
+  text-align: center;
+  color: #64748b;
+  padding: 16 8;
+  font-size: 13;
+}
+
+.farm-count {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12;
+  margin-top: 10;
+  margin-bottom: 4;
+}
+
+.menu-title {
+  font-size: 20;
+  font-weight: 700;
+  color: #19336c;
+  margin-bottom: 4;
+}
+
+.menu-subtitle {
+  font-size: 13;
+  color: #64748b;
+  margin-bottom: 14;
+}
+
+.menu-btn {
+  margin-top: 10;
+  padding: 14;
+  border-radius: 12;
+  font-size: 15;
+  font-weight: 600;
+  text-align: center;
+  horizontal-alignment: stretch;
+}
+
+.menu-btn-secondary {
+  background-color: #eef2f8;
+  color: #19336c;
+}
+
+.menu-btn-danger {
+  background-color: #8b2e2e;
+  color: white;
+}
+
+.menu-btn-ghost {
+  background-color: #f1f5f9;
+  color: #475569;
 }

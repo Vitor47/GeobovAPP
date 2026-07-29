@@ -1,3 +1,21 @@
+## [1.0.0](https://github.com/Vitor47/house-agro-app/compare/v0.0.4...v1.0.0) (2026-07-28)
+
+
+### Features
+
+* rebrand do app de HouseAgro para GeoBov (`com.geobov`)
+* autenticação JWT via CowTrackAPI no lugar do Firebase Auth
+* listagem de gado e posições a partir de `/api/v1/cattle/` + `/api/v1/telemetry/`
+* polling periódico de telemetria LoRa/GPS no mapa
+* logout com limpeza de sessão e guarda de rota no Home
+
+
+### Breaking Changes
+
+* remoção do Firebase Auth e Realtime Database do aplicativo
+
+
+
 ## [0.0.4](https://github.com/Vitor47/house-agro-app/compare/v0.0.3...v0.0.4) (2024-11-06)
 
 

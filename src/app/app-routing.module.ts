@@ -28,7 +28,23 @@ const routes: Routes = [
       },
     ],
   },
-  { path: "home", component: HomeComponent },
+  {
+    path: "home",
+    component: HomeComponent,
+    canActivate: [
+      () => {
+        const user = inject(UserService);
+        const router = inject(RouterExtensions);
+
+        if (!user.isLogin()) {
+          router.navigate(["/signin"], { clearHistory: true });
+          return false;
+        }
+
+        return true;
+      },
+    ],
+  },
 ];
 
 @NgModule({

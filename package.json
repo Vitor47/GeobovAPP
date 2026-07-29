@@ -1,7 +1,7 @@
 {
-  "name": "houseagro",
+  "name": "geobov",
   "main": "./src/main.ts",
-  "version": "0.0.4",
+  "version": "1.0.0",
   "scripts": {
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "version": "npm run changelog && git add CHANGELOG.md"
@@ -19,9 +19,6 @@
     "@nativescript-community/perms": "^2.3.3",
     "@nativescript/angular": "^18.0.0",
     "@nativescript/core": "~8.8.0",
-    "@nativescript/firebase-auth": "^3.3.2",
-    "@nativescript/firebase-core": "^3.3.2",
-    "@nativescript/firebase-database": "^3.3.2",
     "@nativescript/geolocation": "^9.0.0",
     "@nativescript/google-maps": "^1.7.4",
     "@nativescript/theme": "^3.1.0",

@@ -1,10 +1,12 @@
-<ActionBar title="Login" class="action-bar"></ActionBar>
+<ActionBar title="GeoBov" class="action-bar"></ActionBar>
 
 <GridLayout [formGroup]="form" backgroundColor="#19336c" class="container" rows="*,auto,*">
   <StackLayout row="1" class="form">
-    <img src="~/assets/user_avatar_login.png" width="280" height="280" />
+    <Image class="brand-logo" src="~/assets/geobov-logo.png" stretch="aspectFit"></Image>
+    <Label class="brand-subtitle" text="Monitoramento de gado"></Label>
     <label>E-mail: </label>
-    <TextField type="email" formControlName="email" />
+    <TextField type="email" formControlName="email" keyboardType="email" autocorrect="false"
+      autocapitalizationType="none" />
     @if(email.invalid && email.touched) {
     <Label style="color: red;">E-mail inválido</Label>
     }
@@ -19,6 +21,6 @@
     <ActivityIndicator busy="true"></ActivityIndicator>
     }
 
-    <Button text="Login" (tap)="onLogin()" class="btn btn-primary"></Button>
+    <Button text="Entrar" (tap)="onLogin()" class="btn btn-primary"></Button>
   </StackLayout>
 </GridLayout>

@@ -1,7 +1,7 @@
 import { NativeScriptConfig } from '@nativescript/core';
 
 export default {
-  id: 'com.houseagro',
+  id: 'com.geobov',
   appPath: 'src',
   appResourcesPath: 'App_Resources',
   android: {
