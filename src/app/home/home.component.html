@@ -50,13 +50,23 @@
             <Label class="detail-line"
                 [text]="'Próxima atualização: ' + formatNextUpdateEta(selectedCattle.lastSeenAt, selectedCattle.transmissionIntervalMinutes)"
                 textWrap="true"></Label>
+            @if (selectedCattle.rssi != null) {
+            <Label class="detail-line" [text]="'Sinal (RSSI): ' + selectedCattle.rssi + ' dBm'"></Label>
+            }
+            @if (selectedCattle.satellites != null) {
+            <Label class="detail-line" [text]="'Satélites: ' + selectedCattle.satellites"></Label>
+            }
 
             <Label class="notes-label" text="Observação"></Label>
+            @if (canEditNotes) {
             <TextView class="notes-input" [(ngModel)]="observationDraft" hint="Ex.: mancando na pata traseira"
                 height="90"></TextView>
 
             <Button class="btn-save" [text]="isSavingNotes ? 'Salvando...' : 'Salvar observação'"
                 [isEnabled]="!isSavingNotes" (tap)="onSaveObservation()"></Button>
+            } @else {
+            <Label class="detail-line" [text]="selectedCattle.notes || 'Sem observação'" textWrap="true"></Label>
+            }
         </StackLayout>
     </ScrollView>
     }
@@ -122,4 +132,5 @@
         </StackLayout>
     </GridLayout>
     }
+
 </GridLayout>

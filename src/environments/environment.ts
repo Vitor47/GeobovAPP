@@ -4,7 +4,9 @@
  * Physical device via USB (`adb reverse tcp:8000 tcp:8000`) → http://127.0.0.1:8000
  * Android emulator → http://10.0.2.2:8000
  * Physical device on LAN (firewall liberado) → http://192.168.x.x:8000
- * Production → HTTPS URL in environment.prod.ts
+ *
+ * Release builds replace this file with environment.prod.ts
+ * (`ns build android --release` / `--env.production`).
  */
 export const environment = {
   production: false,

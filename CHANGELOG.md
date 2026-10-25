@@ -1,3 +1,11 @@
+## [Unreleased]
+
+### Features
+
+* integra o app à API GeoBov de produção (`https://54.94.137.227`)
+* sessão com `GET /users/me`, fazenda ativa no JWT e logout que revoga o token
+* build release Android do TCC (`tools/build-android-release.ps1`)
+
 ## [1.0.0](https://github.com/Vitor47/house-agro-app/compare/v0.0.4...v1.0.0) (2026-07-28)
 
 

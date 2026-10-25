@@ -26,12 +26,14 @@ import { Toasty } from "@triniwiz/nativescript-toasty";
 import { Subscription, firstValueFrom } from "rxjs";
 
 import { environment } from "../../environments/environment";
+import { messageFromUnknown } from "../api/api-error";
 import { Cattle } from "../models/cattle";
 import { Company } from "../models/company";
 import { AuthStorageService } from "../services/auth-storage.service";
 import { CattleService } from "../services/cattle.service";
 import { CompanyService } from "../services/company.service";
 import { UserService } from "../services/user.service";
+import { companyQueryError } from "../utils/company-query";
 import {
   formatNextUpdateEta,
   formatTimeAgo,
@@ -70,6 +72,7 @@ export class HomeComponent implements OnDestroy {
   searchQuery = "";
   isSuperuser = false;
   canSwitchFarm = false;
+  canEditNotes = true;
   companies: Company[] = [];
   selectedCompanyName = "Carregando fazenda...";
 
@@ -98,6 +101,8 @@ export class HomeComponent implements OnDestroy {
   constructor() {
     const user = this.userService.currentUser();
     this.isSuperuser = !!user?.isSuperuser;
+    const readOnly = user?.role === "viewer" && !user.isSuperuser;
+    this.canEditNotes = !readOnly;
 
     void this.bootstrapFarmContext();
     this.startHerdWatch();
@@ -176,6 +181,12 @@ export class HomeComponent implements OnDestroy {
   }
 
   private async resetAndLoadFarms() {
+    const invalid = companyQueryError(this.farmSearchQuery);
+    if (invalid) {
+      new Toasty({ text: invalid }).show();
+      return;
+    }
+
     this.companies = [];
     this.farmPage = 1;
     this.farmHasMore = false;
@@ -199,13 +210,15 @@ export class HomeComponent implements OnDestroy {
       this.farmPage = result.page;
       this.farmHasMore = result.has_more;
       this.farmTotal = result.total;
-    } catch {
+    } catch (error) {
       if (replace) {
         this.companies = [];
         this.farmHasMore = false;
         this.farmTotal = 0;
       }
-      new Toasty({ text: "Não foi possível carregar as fazendas" }).show();
+      new Toasty({
+        text: messageFromUnknown(error, "Não foi possível carregar as fazendas"),
+      }).show();
     } finally {
       this.isLoadingFarms = false;
     }
@@ -238,9 +251,11 @@ export class HomeComponent implements OnDestroy {
     try {
       await this.userService.switchCompany(company.id);
       this.startHerdWatch();
-    } catch {
+    } catch (error) {
       this.selectedCompanyName = "Fazenda indisponível";
-      new Toasty({ text: "Não foi possível trocar de fazenda" }).show();
+      new Toasty({
+        text: messageFromUnknown(error, "Não foi possível trocar de fazenda"),
+      }).show();
       this.startHerdWatch();
     }
   }
@@ -402,8 +417,10 @@ export class HomeComponent implements OnDestroy {
       }
 
       new Toasty({ text: "Observação salva" }).show();
-    } catch {
-      new Toasty({ text: "Não foi possível salvar a observação" }).show();
+    } catch (error) {
+      new Toasty({
+        text: messageFromUnknown(error, "Não foi possível salvar a observação"),
+      }).show();
     } finally {
       this.isSavingNotes = false;
     }

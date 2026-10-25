@@ -32,13 +32,22 @@ const routes: Routes = [
     path: "home",
     component: HomeComponent,
     canActivate: [
-      () => {
+      async () => {
         const user = inject(UserService);
         const router = inject(RouterExtensions);
 
         if (!user.isLogin()) {
           router.navigate(["/signin"], { clearHistory: true });
           return false;
+        }
+
+        try {
+          await user.ensureSession();
+        } catch {
+          if (!user.isLogin()) {
+            router.navigate(["/signin"], { clearHistory: true });
+            return false;
+          }
         }
 
         return true;

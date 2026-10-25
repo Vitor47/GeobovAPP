@@ -3,12 +3,16 @@ import { Injectable, inject } from "@angular/core";
 import { Observable, forkJoin, of, timer } from "rxjs";
 import { catchError, map, switchMap } from "rxjs/operators";
 
+import { asList } from "../api/collections";
+import { endpoints } from "../api/endpoints";
 import { environment } from "../../environments/environment";
-import { Cattle, CattleResponse } from "../models/cattle";
+import { Cattle, CattleResponse, CattleWrite } from "../models/cattle";
 import { Company } from "../models/company";
 import { DeviceResponse } from "../models/device";
 import { TelemetryResponse } from "../models/telemetry";
 import { CompanyService } from "./company.service";
+import { DeviceService } from "./device.service";
+import { TelemetryService } from "./telemetry.service";
 
 @Injectable({
   providedIn: "root",
@@ -16,21 +20,40 @@ import { CompanyService } from "./company.service";
 export class CattleService {
   private http = inject(HttpClient);
   private companyService = inject(CompanyService);
+  private deviceService = inject(DeviceService);
+  private telemetryService = inject(TelemetryService);
 
-  private readonly cattleUrl = `${environment.apiBaseUrl}/api/v1/cattle/`;
-  private readonly telemetryUrl = `${environment.apiBaseUrl}/api/v1/telemetry/`;
-  private readonly devicesUrl = `${environment.apiBaseUrl}/api/v1/devices/`;
+  list(): Observable<CattleResponse[]> {
+    return this.http
+      .get<CattleResponse[] | { items?: CattleResponse[] }>(endpoints.cattle)
+      .pipe(map((body) => asList(body)));
+  }
+
+  get(id: number): Observable<CattleResponse> {
+    return this.http.get<CattleResponse>(endpoints.cattleById(id));
+  }
+
+  create(body: CattleWrite): Observable<CattleResponse> {
+    return this.http.post<CattleResponse>(endpoints.cattle, body);
+  }
+
+  update(
+    id: number,
+    body: Partial<CattleWrite>
+  ): Observable<CattleResponse> {
+    return this.http.patch<CattleResponse>(endpoints.cattleById(id), body);
+  }
 
   /**
    * Loads cattle + latest GPS sample + device interval + farm name.
    */
   listWithLocations(): Observable<Cattle[]> {
     return forkJoin({
-      cattle: this.http.get<CattleResponse[]>(this.cattleUrl),
-      telemetry: this.http.get<TelemetryResponse[]>(this.telemetryUrl).pipe(
+      cattle: this.list(),
+      telemetry: this.telemetryService.list().pipe(
         catchError(() => of([] as TelemetryResponse[]))
       ),
-      devices: this.http.get<DeviceResponse[]>(this.devicesUrl).pipe(
+      devices: this.deviceService.list().pipe(
         catchError(() => of([] as DeviceResponse[]))
       ),
       company: this.companyService.getCurrentCompany().pipe(
@@ -45,7 +68,6 @@ export class CattleService {
 
   /**
    * Polls the API periodically until unsubscribed.
-   * Interval should match (or be slightly under) the LoRa transmission cycle.
    */
   watchHerd(
     intervalMs = environment.telemetryPollIntervalMs
@@ -104,8 +126,7 @@ export class CattleService {
           id: item.id,
           name: item.name,
           tag: item.tag,
-          description:
-            item.description || item.breed || undefined,
+          description: item.description || item.breed || undefined,
           lat: position.lat,
           lng: position.lon,
           lastSeenAt: position.timestamp ?? null,
@@ -118,14 +139,14 @@ export class CattleService {
           weight: item.weight,
           gender: item.gender,
           color: item.color,
+          rssi: position.rssi,
+          satellites: position.satellites,
         } as Cattle;
       })
       .filter((item): item is Cattle => item != null);
   }
 
   updateNotes(cattleId: number, notes: string): Observable<CattleResponse> {
-    return this.http.patch<CattleResponse>(`${this.cattleUrl}${cattleId}`, {
-      notes,
-    });
+    return this.update(cattleId, { notes });
   }
 }

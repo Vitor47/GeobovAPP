@@ -1,6 +1,8 @@
 # GeoBov
 
-Aplicativo mobile para monitoramento de gado no mapa. Desenvolvido com **NativeScript** e **Angular**, o **GeoBov** consome a **CowTrackAPI** (FastAPI) para autenticação JWT e para exibir a posição dos animais a partir da telemetria LoRa/GPS.
+Aplicativo mobile para monitoramento de gado no mapa. Desenvolvido com **NativeScript** e **Angular**, o **GeoBov** consome a API GeoBov (FastAPI) para autenticação JWT e para exibir a posição dos animais a partir da telemetria LoRa/GPS.
+
+Produção: `https://54.94.137.227` (HTTPS no IP, certificado Let's Encrypt). O build de release troca `environment.ts` por `environment.prod.ts`.
 
 ---
 
@@ -14,8 +16,8 @@ Aplicativo mobile para monitoramento de gado no mapa. Desenvolvido com **NativeS
 - [Configuração do ambiente](#configuração-do-ambiente)
 - [Como rodar a aplicação](#como-rodar-a-aplicação)
 - [Estrutura do projeto](#estrutura-do-projeto)
-- [CowTrackAPI](#cowtrackapi)
-- [Publicação nas lojas](#publicação-nas-lojas)
+- [API GeoBov](#api-geobov)
+- [Deploy de produção (TCC)](#deploy-de-produção-tcc)
 - [Como contribuir](#como-contribuir)
 - [Versionamento e changelog](#versionamento-e-changelog)
 - [Licença](#licença)
@@ -26,12 +28,13 @@ Aplicativo mobile para monitoramento de gado no mapa. Desenvolvido com **NativeS
 
 | Funcionalidade | Descrição | Status |
 |---|---|---|
-| **Login** | Autenticação JWT via CowTrackAPI (`POST /api/v1/users/login`) | ✅ Ativo |
-| **Logout** | Invalida sessão na API e limpa o token local | ✅ Ativo |
+| **Login** | `POST /api/v1/users/login`. Token de 24 h. 10 erros em 15 min respondem 429 | ✅ Ativo |
+| **Logout** | `POST /api/v1/users/logout` revoga o token na hora e limpa a sessão local | ✅ Ativo |
+| **Fazenda ativa** | Vem no JWT (`company_id`). Se vier null, `POST /users/switch-company` | ✅ Ativo |
 | **Mapa interativo** | Google Maps com marcadores do rebanho | ✅ Ativo |
 | **Geolocalização** | Centraliza o mapa na posição atual do usuário | ✅ Ativo |
-| **Telemetria LoRa** | Posições vindas de `GET /api/v1/telemetry/` (ingest via gateway) | ✅ Ativo |
-| **Atualização periódica** | Polling da API (padrão 15s) enquanto o Firebase não existe mais | ✅ Ativo |
+| **Telemetria LoRa** | Posições de `GET /api/v1/telemetry/`. O ESP32 envia o ingest sozinho | ✅ Ativo |
+| **Atualização periódica** | Polling da API a cada 5 minutos | ✅ Ativo |
 | **Busca de animais** | Filtro por nome, brinco ou descrição com foco no mapa | ✅ Ativo |
 
 ### Modelo exibido no mapa
@@ -56,7 +59,7 @@ Cadastro do animal: `GET /api/v1/cattle/`. Coordenadas: última amostra em `GET 
 
 ```
 ┌─────────────────────┐         ┌──────────────────────────┐
-│   GeoBov (mobile)   │  HTTPS  │   CowTrackAPI            │
+│   GeoBov (mobile)   │  HTTPS  │   API GeoBov             │
 │   NativeScript +    │ ──────► │   FastAPI + JWT          │
 │   Angular 18        │         │   PostgreSQL + Redis     │
 └─────────────────────┘         │   Mongo (telemetria)     │
@@ -66,11 +69,13 @@ Cadastro do animal: `GET /api/v1/cattle/`. Coordenadas: última amostra em `GET 
 
 ### Fluxo
 
-1. Login em `SignIn` → `UserService` chama `POST /api/v1/users/login` e guarda o JWT.
-2. Navegação para `Home` (rota protegida).
-3. `CattleService` busca gado + telemetria, junta a última posição por `cattle_id`.
-4. Marcadores no Google Maps; polling atualiza posições.
-5. Busca filtra por `name` / `tag` e centraliza o mapa.
+1. Login em `SignIn` → `POST /api/v1/users/login`. A senha não é gravada.
+2. Se `company_id` vier null, `POST /api/v1/users/switch-company` com a fazenda padrão e o app substitui o token. O token anterior deixa de valer.
+3. Navegação para `Home`. A rota chama `GET /api/v1/users/me` antes de carregar o mapa.
+4. `CattleService` busca gado, coleiras e telemetria, e junta a última posição por `cattle_id`.
+5. Marcadores no Google Maps; polling atualiza posições.
+6. Busca filtra por `name` / `tag` e centraliza o mapa.
+7. **Sair** chama `POST /api/v1/users/logout`. Token revogado responde 401 e não conta como tentativa de login.
 
 ---
 
@@ -78,7 +83,7 @@ Cadastro do animal: `GET /api/v1/cattle/`. Coordenadas: última amostra em `GET 
 
 | Tecnologia | Versão |
 |---|---|
-| **GeoBov (app)** | `1.0.0` |
+| **GeoBov (app)** | `1.1.0` |
 | **Application ID** | `com.geobov` |
 | **Angular** | `~18.0.0` |
 | **NativeScript Core** | `~8.8.0` |
@@ -95,7 +100,7 @@ Cadastro do animal: `GET /api/v1/cattle/`. Coordenadas: última amostra em `GET 
 | `@nativescript/geolocation` | Localização do usuário |
 | `@triniwiz/nativescript-toasty` | Toasts |
 
-Backend: repositório **CowTrackAPI** (`/home/vitor/house_agro/CowTrackAPI` no WSL).
+Backend: API GeoBov em `https://54.94.137.227`. Repositório **CowTrackAPI**. `/docs`, `/redoc` e `/admin` não são públicos.
 
 ---
 
@@ -135,7 +140,7 @@ Edite `src/environments/environment.ts`:
 |---|---|
 | Emulador Android → API no PC/WSL | `http://10.0.2.2:8000` |
 | Celular físico na mesma rede | `http://SEU_IP_LAN:8000` |
-| API em produção (HTTPS) | URL pública (veja `environment.prod.ts`) |
+| App de release / TCC | `https://54.94.137.227` (`environment.prod.ts`) |
 
 **WSL2:** garanta que a porta `8000` esteja acessível a partir do Windows (espelhamento de rede ou `netsh interface portproxy`). No emulador, `10.0.2.2` aponta para o host Windows.
 
@@ -145,16 +150,18 @@ Com a API ainda fora do ar, use o ambiente de desenvolvimento local da CowTrackA
 
 Chave em `App_Resources/Android/src/main/AndroidManifest.xml` (`com.google.android.geo.API_KEY`). Restrinja a chave por package `com.geobov` antes de publicar.
 
-### Credenciais de teste
+### Credenciais
 
-Use o usuário seed da CowTrackAPI (ex.: `admin@example.com` / senha do `.env`). Usuários de fazenda precisam ter `company_id`; superuser exige `X-Company-Id` (o app envia se `companyId` estiver na sessão).
+Não grave senha nem token no repositório. O superusuário de produção existe só na máquina da API. A fazenda ativa vai no JWT (`company_id`); o app não envia `X-Company-Id`.
+
+O gateway é o ESP32. Ele conecta no Wi-Fi pelo portal (botão BOOT), guarda a URL de ingest e a `X-Gateway-Api-Key`, e faz o `POST /api/v1/gateways/ingest`. O aplicativo só lê a telemetria que a API já gravou.
 
 ---
 
 ## Como rodar a aplicação
 
-1. Suba a CowTrackAPI e rode `make seed` se ainda não houver dados.
-2. Ajuste `apiBaseUrl` se necessário.
+1. Para desenvolvimento, suba a API local. Para ensaiar contra produção: `npm run run:android:prod`.
+2. Ajuste `apiBaseUrl` em `environment.ts` se o aparelho não alcançar `127.0.0.1`.
 3. No app:
 
 ```bash
@@ -163,12 +170,7 @@ ns run android
 ns run ios
 ```
 
-### Build de release
-
-```bash
-ns build android --release
-ns build ios --release
-```
+O APK assinado do TCC está em [Deploy de produção (TCC)](#deploy-de-produção-tcc). `ns build android --release` também aponta para a API de produção.
 
 ### Fluxo de teste manual
 
@@ -189,7 +191,7 @@ geobov/
 │   ├── app/
 │   │   ├── home/                  # Mapa + busca
 │   │   ├── signIn/                # Login
-│   │   ├── services/
+│   │   ├── services/              # users, cattle, devices, telemetry
 │   │   │   ├── user.service.ts    # Auth JWT
 │   │   │   ├── cattle.service.ts  # Gado + telemetria
 │   │   │   └── auth-storage.service.ts
@@ -200,43 +202,82 @@ geobov/
 │   │   ├── environment.ts
 │   │   └── environment.prod.ts
 │   └── main.ts
+├── tools/build-android-release.ps1
 ├── package.json                   # name: geobov
 └── nativescript.config.ts         # id: com.geobov
 ```
 
 ---
 
-## CowTrackAPI
+## API GeoBov
 
-Endpoints usados pelo app:
+Base de produção: `https://54.94.137.227`. JSON em todas as rotas. Rotas protegidas usam `Authorization: Bearer <access_token>`.
+
+Listas levam barra no final (`/api/v1/cattle/`). `/login`, `/me`, `/logout` e `/switch-company` não levam.
 
 | Método | Rota | Uso |
 |---|---|---|
-| `POST` | `/api/v1/users/login` | Login + JWT |
-| `POST` | `/api/v1/users/logout` | Logout |
-| `GET` | `/api/v1/cattle/` | Lista de animais |
-| `GET` | `/api/v1/telemetry/` | Amostras GPS (LoRa → gateway ingest) |
+| `GET` | `/health` | Saúde pública (banco, Redis, Mongo) |
+| `POST` | `/api/v1/users/login` | Login. Body `{ email, password }` |
+| `GET` | `/api/v1/users/me` | Sessão atual |
+| `POST` | `/api/v1/users/logout` | Revoga o token na hora |
+| `POST` | `/api/v1/users/switch-company` | Novo JWT com `company_id` |
+| `GET` | `/api/v1/companies/` | Fazendas (`q`, `page`, `page_size`) |
+| `GET` | `/api/v1/companies/me` | Fazenda do JWT |
+| `GET`/`POST` | `/api/v1/cattle/` | Lista e cadastro |
+| `GET`/`PATCH` | `/api/v1/cattle/{id}` | Detalhe e atualização |
+| `GET`/`POST` | `/api/v1/devices/` | Coleiras |
+| `GET` | `/api/v1/devices/{id}` | Detalhe da coleira |
+| `GET` | `/api/v1/telemetry/` | Amostras para o mapa |
+| `GET` | `/api/v1/telemetry/{id}` | Uma amostra |
 
-Docs da API: `http://localhost:8000/docs/scalar`
+Erros: `{ "detail": "..." }` com 400, 401, 403, 404, 422 ou 429. Busca de fazenda com `%` ou `_` responde 422; o app bloqueia esses caracteres antes do request.
 
-Ingestão de campo (não chamada pelo app): `POST /api/v1/gateways/ingest` com `X-Gateway-Api-Key`.
+O `POST /api/v1/gateways/ingest` fica no firmware do ESP32, com o header `X-Gateway-Api-Key`. A URL padrão do firmware já é `https://54.94.137.227/api/v1/gateways/ingest`. A chave é colada no portal WiFiManager do aparelho, não no aplicativo.
+
+O certificado é Let's Encrypt para o IP, sem domínio, e dura poucos dias. O app confia na CA do sistema e não faz pin. Renove o certificado na máquina da API antes da apresentação.
 
 ---
 
-## Publicação nas lojas
+## Deploy de produção (TCC)
 
-Checklist antes de subir:
+O APK de release usa `environment.prod.ts` (`https://54.94.137.227`). O `ns run android` comum continua na API local. Para ensaiar no celular contra produção sem assinar:
 
-- [ ] Trocar `apiBaseUrl` de produção para HTTPS (`environment.prod.ts`)
-- [ ] Desativar cleartext HTTP quando só HTTPS for usado (`usesCleartextTraffic` / ATS)
-- [ ] Restringir a chave do Google Maps ao package `com.geobov` e ao SHA-1 de release
-- [ ] Gerar keystore de upload Android e assinar o AAB/APK
-- [ ] Atualizar ícones/splash com a identidade GeoBov
-- [ ] Preencher fichas Play Console / App Store Connect (privacidade, localização)
-- [ ] Alinhar `versionCode` / `versionName` (`app.gradle`) e iOS `CFBundleShortVersionString`
-- [ ] Testar login, mapa, busca e logout em dispositivo físico
+```bash
+npm run run:android:prod
+```
 
-Versão atual alinhada: **1.0.0** (`package.json` + Android `versionName`).
+### Keystore (fora do Git)
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.geobov"
+keytool -genkeypair -v -keystore "$env:USERPROFILE\.geobov\upload.jks" -alias geobov -keyalg RSA -keysize 2048 -validity 10000
+keytool -list -v -keystore "$env:USERPROFILE\.geobov\upload.jks" -alias geobov
+```
+
+Use o SHA-1 desse keystore para restringir a chave do Google Maps ao package `com.geobov`. Não commite o `.jks` nem as senhas.
+
+### APK assinado
+
+```powershell
+$env:GEOBOV_KEYSTORE_PATH = "$env:USERPROFILE\.geobov\upload.jks"
+$env:GEOBOV_KEYSTORE_PASSWORD = "<senha do keystore>"
+$env:GEOBOV_KEY_ALIAS = "geobov"
+$env:GEOBOV_KEY_PASSWORD = "<senha da chave>"
+npm run build:android:release
+```
+
+O script `tools/build-android-release.ps1` gera o APK em `dist/`. Instale no celular da apresentação (`adb install -r` no arquivo `.apk`). Versão alinhada: **1.1.0** (`versionName` / `versionCode` 2).
+
+Antes da banca:
+
+- [ ] Certificado HTTPS da API renovado (Let's Encrypt do IP `54.94.137.227`)
+- [ ] `GET /health` responde `status: ok`
+- [ ] Login, mapa, busca, troca de fazenda e logout no aparelho físico
+- [ ] ESP32 no portal `GeoBov-Gateway`, com a chave no campo `X-Gateway-Api-Key`
+- [ ] Chave do Google Maps restrita ao package e ao SHA-1 de release
+
+Cleartext HTTP permanece ligado para o desenvolvimento local. O binário de release só fala com a API em HTTPS.
 
 ---
 

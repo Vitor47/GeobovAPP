@@ -4,6 +4,10 @@
   <StackLayout row="1" class="form">
     <Image class="brand-logo" src="~/assets/geobov-logo.png" stretch="aspectFit"></Image>
     <Label class="brand-subtitle" text="Monitoramento de gado"></Label>
+    @if (apiStatus() === "down") {
+    <Label class="api-status" text="Não foi possível falar com a API. O login precisa de rede."
+      textWrap="true"></Label>
+    }
     <label>E-mail: </label>
     <TextField type="email" formControlName="email" keyboardType="email" autocorrect="false"
       autocapitalizationType="none" />

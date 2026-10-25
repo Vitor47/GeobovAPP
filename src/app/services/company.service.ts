@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable, inject } from "@angular/core";
-import { Observable } from "rxjs";
+import { Observable, throwError } from "rxjs";
 
-import { environment } from "../../environments/environment";
+import { endpoints } from "../api/endpoints";
 import { Company, CompanyListPage } from "../models/company";
+import { normalizeCompanyQuery } from "../utils/company-query";
 
 export interface ListCompaniesParams {
   q?: string;
@@ -16,29 +17,34 @@ export interface ListCompaniesParams {
 })
 export class CompanyService {
   private http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiBaseUrl}/api/v1/companies`;
 
   /**
-   * Paginated farm list with optional name search.
-   * Superuser: all farms. Farmer: only memberships.
+   * Paginated farm list. `q` allows letters, numbers, space, apostrophe
+   * and hyphen, up to 80 characters.
    */
   listCompanies(params: ListCompaniesParams = {}): Observable<CompanyListPage> {
+    let query: string | undefined;
+    try {
+      query = normalizeCompanyQuery(params.q);
+    } catch (error) {
+      return throwError(() => error);
+    }
+
     let httpParams = new HttpParams()
       .set("page", String(params.page ?? 1))
       .set("page_size", String(params.pageSize ?? 20));
 
-    const query = params.q?.trim();
     if (query) {
       httpParams = httpParams.set("q", query);
     }
 
-    return this.http.get<CompanyListPage>(`${this.baseUrl}/`, {
+    return this.http.get<CompanyListPage>(endpoints.companies, {
       params: httpParams,
     });
   }
 
-  /** Company resolved from JWT `company_id`. */
+  /** Company resolved from JWT company_id. */
   getCurrentCompany(): Observable<Company> {
-    return this.http.get<Company>(`${this.baseUrl}/me`);
+    return this.http.get<Company>(endpoints.companyMe);
   }
 }
