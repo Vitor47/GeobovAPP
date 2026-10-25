@@ -1,4 +1,5 @@
-const COMPANY_QUERY_PATTERN = /^[\p{L}\p{N} '\u2019-]{1,80}$/u;
+// Latin letters and digits only. Android's JS engine rejects \p{L}/\p{N}.
+const COMPANY_QUERY_PATTERN = /^[0-9A-Za-z\u00C0-\u024F '\u2019-]{1,80}$/;
 
 export const COMPANY_QUERY_ERROR =
   "A busca aceita letras, números, espaço, apóstrofo e hífen, até 80 caracteres.";
