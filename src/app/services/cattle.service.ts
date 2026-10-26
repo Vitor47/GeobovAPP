@@ -10,6 +10,7 @@ import { Cattle, CattleResponse, CattleWrite } from "../models/cattle";
 import { Company } from "../models/company";
 import { DeviceResponse } from "../models/device";
 import { TelemetryResponse } from "../models/telemetry";
+import { parseApiInstant } from "../utils/telemetry-freshness";
 import { CompanyService } from "./company.service";
 import { DeviceService } from "./device.service";
 import { TelemetryService } from "./telemetry.service";
@@ -105,10 +106,10 @@ export class CattleService {
       }
 
       const previousTs = previous.timestamp
-        ? new Date(previous.timestamp).getTime()
+        ? parseApiInstant(previous.timestamp)
         : 0;
       const currentTs = sample.timestamp
-        ? new Date(sample.timestamp).getTime()
+        ? parseApiInstant(sample.timestamp)
         : 0;
 
       if (currentTs >= previousTs) {

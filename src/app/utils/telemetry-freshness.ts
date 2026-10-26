@@ -1,10 +1,25 @@
 import { environment } from "../../environments/environment";
 
+/**
+ * GeoBov timestamps are UTC. FastAPI often sends a naive value with no Z.
+ * Without an offset, JavaScript would read that clock time in the phone zone.
+ */
+export function parseApiInstant(value?: string | null): number {
+  if (!value) return Number.NaN;
+
+  const trimmed = value.trim();
+  if (!trimmed) return Number.NaN;
+
+  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmed);
+  const normalized = hasZone ? trimmed : `${trimmed.replace(" ", "T")}Z`;
+  return new Date(normalized).getTime();
+}
+
 /** Formats a past timestamp as a short relative phrase in Portuguese. */
 export function formatTimeAgo(isoDate?: string | null, now = Date.now()): string {
   if (!isoDate) return "desconhecida";
 
-  const then = new Date(isoDate).getTime();
+  const then = parseApiInstant(isoDate);
   if (Number.isNaN(then)) return "desconhecida";
 
   const diffMs = Math.max(0, now - then);
@@ -35,7 +50,7 @@ export function formatNextUpdateEta(
     return `em aproximadamente ${intervalMinutes} minutos`;
   }
 
-  const then = new Date(lastSeenAt).getTime();
+  const then = parseApiInstant(lastSeenAt);
   if (Number.isNaN(then)) {
     return `em aproximadamente ${intervalMinutes} minutos`;
   }
