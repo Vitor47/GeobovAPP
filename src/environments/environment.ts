@@ -1,16 +1,10 @@
 /**
- * Development defaults.
- *
- * Physical device via USB (`adb reverse tcp:8000 tcp:8000`) → http://127.0.0.1:8000
- * Android emulator → http://10.0.2.2:8000
- * Physical device on LAN (firewall liberado) → http://192.168.x.x:8000
- *
- * Release builds replace this file with environment.prod.ts
- * (`ns build android --release` / `--env.production`).
+ * The API is in production. Local builds use the same public HTTPS address.
+ * Release builds still swap this file for environment.prod.ts.
  */
 export const environment = {
   production: false,
-  apiBaseUrl: "http://127.0.0.1:8000",
+  apiBaseUrl: "https://54.94.137.227",
   /** How often the app re-fetches herd positions from the API (5 min). */
   telemetryPollIntervalMs: 5 * 60 * 1000,
   /** Fallback when device has no transmission_interval_minutes. */

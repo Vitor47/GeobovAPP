@@ -427,21 +427,61 @@ export class HomeComponent implements OnDestroy {
   }
 
   private async bootstrapFarmContext() {
-    try {
-      const page = await firstValueFrom(
-        this.companyService.listCompanies({ page: 1, pageSize: 1 })
-      );
-      this.canSwitchFarm = page.total > 1;
-      this.farmTotal = page.total;
+    const user = this.userService.currentUser();
+    console.log(
+      "farm context user",
+      JSON.stringify({
+        companyId: user?.companyId ?? null,
+        role: user?.role ?? null,
+        isSuperuser: !!user?.isSuperuser,
+      })
+    );
 
+    try {
       const current = await firstValueFrom(
         this.companyService.getCurrentCompany()
       );
       this.selectedCompanyName = current.name;
-    } catch {
-      this.selectedCompanyName = "Fazenda indisponível";
+    } catch (error) {
+      console.log("GET /companies/me failed", this.describeApiError(error));
+      this.selectedCompanyName = messageFromUnknown(
+        error,
+        "Fazenda indisponível"
+      );
+    }
+
+    try {
+      const page = await firstValueFrom(
+        this.companyService.listCompanies({ page: 1, pageSize: 20 })
+      );
+      this.canSwitchFarm = page.total > 1;
+      this.farmTotal = page.total;
+      if (!this.selectedCompanyName || this.selectedCompanyName === "Carregando fazenda...") {
+        this.selectedCompanyName = page.items[0]?.name || this.selectedCompanyName;
+      }
+    } catch (error) {
+      console.log("GET /companies/ failed", this.describeApiError(error));
       this.canSwitchFarm = false;
     }
+  }
+
+  private describeApiError(error: unknown): string {
+    if (error instanceof Error && !("status" in error)) {
+      return error.message;
+    }
+    const httpError = error as {
+      status?: number;
+      url?: string;
+      message?: string;
+      error?: { detail?: unknown };
+    };
+    const detail = httpError.error?.detail;
+    return JSON.stringify({
+      status: httpError.status ?? null,
+      url: httpError.url ?? null,
+      message: httpError.message ?? null,
+      detail: typeof detail === "string" ? detail : detail ?? null,
+    });
   }
 
   private startHerdWatch() {
